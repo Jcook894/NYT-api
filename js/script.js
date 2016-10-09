@@ -26,22 +26,51 @@ function loadData() {
     $body.append('<img class="bgimg" src="'+ streetViewUrl + '">');
 
     // load nytimes
-        var nyTimesUrl = "https://api.nytimes.com/svc/search/v2/articlesearch.json?=q" + cityStr + '&sort=newest&api-key=04af26cdd76f4b8da348f53553eadcb3'
+        var nyTimesUrl = "https://api.nytimes.com/svc/search/v2/articlesearch.json?q=" + cityStr + '&sort=newest&api-key=04af26cdd76f4b8da348f53553eadcb3'
 
 
         $.getJSON(nyTimesUrl, function(data){
           $nytHeaderElem.text("New York Times articles about " + cityStr);
 
             articles = data.response.docs;
-            for(var i = 0; i > articles.length; i++)
+            for(var i = 0; i < articles.length; i++)
             {
               var article = articles[i]
-              $nytElem.append('<li class="article">'+ '<a href="'+ article.web_url +'">' +artile.headline.main+'</a>' + '<p>'
+              $nytElem.append('<li class="article">'+ '<a href="'+ article.web_url +'">' +article.headline.main+'</a>' + '<p>'
                + article.snippet + '</p>' + '</li>');
             };
             console.log(articles)
+        }).error(function(e){
+          $nytHeaderElem.text("New York Times articles could not be loaded");
         })
 
+        // Loads wikipedia api.
+        var wikiUrl ='https://en.wikipedia.org/w/api.php?action=opensearch&search=' + cityStr + '&format=json&callback=wikiCallback';
+        // Error handling for wiki api.
+        var wikiRequestTimeout =  setTimeout(function(){
+          $wikiElem.text("Failed to get wikipedia resources :[");
+        },8000)
+       $.ajax({
+          url: wikiUrl,
+          data: {
+              "action": "opensearch",
+              "search": cityStr,
+              "format": "json",
+          },
+          dataType: "jsonp",
+          success: function (response) {
+              console.log(response);
+              linkDisplays = response[1];
+              links = response[3];
+              var articles = [];
+              for (var index = 0; index < response[1].length; index++) {
+                  articles.push(
+                      "<li><a href=" + '"' + links[index] + '"' + ">" + linkDisplays[index] + "</a></li>");
+              }
+              $wikiElem.append(articles);
+              clearTimeout(wikiRequestTimeout);
+          }
+});
 
 
 
